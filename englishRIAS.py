@@ -27,13 +27,13 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import json
 from networkx.readwrite import json_graph
-import httpserver
 
- 
+resourcesPath = "englishResources\\"
+outputsPath = "englishOutputs\\"
 
 isRandom = False
 tapeindexes=[None] * 5
-doc = Document('C:\RIASmanual2016.docx')
+doc = Document(resourcesPath + 'RIASmanual2016.docx')
 try:
     from xml.etree.cElementTree import XML
 except ImportError:
@@ -87,7 +87,7 @@ def parseWordtoXExcel(path):
     row = 0
     col = 0            
     
-    workbook =xlsxwriter.Workbook('C:\hi\data.xlsx')
+    workbook =xlsxwriter.Workbook(outputsPath+'data.xlsx')
     worksheet = workbook.add_worksheet()
     text = get_docx_text(path)
     splited = text.splitlines()    
@@ -295,7 +295,7 @@ dict = {'personal':1,'laughs':2,'approve':3,'comp':4,'agree':5,'bc':6,'emp':7
 
 
 train_data = []
-workbook =xlrd.open_workbook('C:\hi\data.xlsx')
+workbook =xlrd.open_workbook(outputsPath+'\data.xlsx')
 sheet = workbook.sheet_by_name('Sheet1')
 for rownum in range(sheet.nrows):
     train_data.append(str((sheet.cell_value(rownum, 2))))
@@ -314,7 +314,7 @@ ind = 0
 while (ind<len(train_data)):
     train.append((train_data[ind],train_tags[ind]))
     ind+=1
-#print ("nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn ",len(train))
+
 #################################################### parsing ##############################################################################
 
 
@@ -357,7 +357,7 @@ while i<len(train):
 row = 1
 col = 0
 
-workbook2 =xlsxwriter.Workbook('C:\hi\categoriesSentences.xlsx')
+workbook2 =xlsxwriter.Workbook(outputsPath+'categoriesSentences.xlsx')
 worksheet2 = workbook2.add_worksheet()
 
 for cat in dict:
@@ -373,7 +373,7 @@ workbook2.close()
 
 #################################################### into bag of words and features #################################################################
 
-tokenizer1 = keras.preprocessing.text.Tokenizer(filters='!"#$%&*+,.:;<=>@\^_`{|}~\t\n')
+'''tokenizer1 = keras.preprocessing.text.Tokenizer(filters='!"#$%&*+,.:;<=>@\^_`{|}~\t\n')
 actorsTrainVecs = np.vectorize(lambda x: 0 if x == 'Doctor' else 1)(np.array(actorsTrain)).reshape((-1,1))
 actorsTestVecs = np.vectorize(lambda x: 0 if x == 'Doctor' else 1)(np.array(actorsTest)).reshape((-1,1))
 tokenizer1.fit_on_texts([i[0] for i in train_data])
@@ -409,11 +409,13 @@ afterFitTextTest = np.hstack((contains2DotsTest,afterFitTextTest))
 afterFitTextTest = np.hstack((contains1DotTest,afterFitTextTest))
 afterFitTextTest = np.hstack((containsLinesTest,afterFitTextTest))
 afterFitTextTest = np.hstack((actorsTestVecs,afterFitTextTest))
+'''
 #################################################### into bag of words and features #################################################################
 
 
 
 #################################################### nueral network model #################################################################
+'''
 def nueralModel():
     #afterFitText = np.hstack((actorsTrainVecs,afterFitText))  
     model = Sequential([
@@ -430,13 +432,14 @@ def nueralModel():
     print ("nueral network results: ")
     print(model.evaluate(afterFitTextTest,afterFitLabelsTest))
     return model
+'''
 #################################################### nueral network model #################################################################
 
 
 
 
 #################################################### nueral network with previous model ###################################################
-def nueralWithPreviousModel():
+'''def nueralWithPreviousModel():
     zerosVec = np.zeros(len(afterFitText[1]))
     newSentencesVec = np.vstack((zerosVec,afterFitText))
     twoSentencesVectorTrain = []
@@ -474,12 +477,14 @@ def nueralWithPreviousModel():
     print ("nueral network with previous sentence results: ")
     print(model3.evaluate(twoSentencesVectorTest,afterFitLabelsTest))
     return model3
+'''    
 #################################################### nueral network with previous model ###################################################
 
 
 
 
 #################################################### random forest model ##################################################################
+'''
 def randomForestModel():
     #clf = RandomForestClassifier(n_jobs=10,max_depth=500, random_state=100,n_estimators=200)
     clf = RandomForestClassifier(n_estimators=100, min_samples_split=2, random_state=0,max_features='auto',bootstrap=False,n_jobs=10)
@@ -488,12 +493,12 @@ def randomForestModel():
     print (clf.score(afterFitTextTest,afterFitLabelsTest))
     return clf
 #################################################### random forest model ##################################################################
-
+'''
 
 
 
 #################################################### nueral network with lstm model ##################################################################
-
+'''
 def lstmModel():
     X_train = [i[0] for i in train_data]
     X_test = [i[0] for i in test_data]
@@ -526,7 +531,7 @@ def lstmModel():
     print ("lstm results: ")
     print("Accuracy: %.2f%%" % (scores[1]*100))
     return model2
-
+'''
 #################################################### nueral network with lstm model ##################################################################
 
 #################################################### k-fold with nueral model ##################################################################
@@ -547,14 +552,92 @@ def writeToSheet(workSheet, trasctipt_ID, testSize,trainSize, compName,isComp, s
 
 model_predicts  = None
 tokenizer_dic = None
-tmpTestDataTags = None    
+tmpTestDataTags = None
+
+def splitIntoDoctorPatient(afterFitText,afterFitLabels, actorsTrain):
+     actorsTrainVecs2 = np.vectorize(lambda x: True if x == 'Doctor' else False)(np.array(actorsTrain))
+     i = 0
+     tmpPred = []
+     tmpPred2 = []
+     for element in actorsTrainVecs2:
+         if (element):
+            tmpPred.append(i)
+         else:
+            tmpPred2.append(i)  
+         i+=1
+     print (train_data)     
+     doctorSentences = np.array(afterFitText.tolist())[tmpPred]
+     afterFitLabelsDoctor =  np.array(afterFitLabels.tolist())[tmpPred]
+     paitentSentences = np.array(afterFitText.tolist())[tmpPred2]
+     afterFitLabelsPaitent =  np.array(afterFitLabels.tolist())[tmpPred2]
+     return doctorSentences,afterFitLabelsDoctor,paitentSentences, afterFitLabelsPaitent
+    
+def extactFeaturesTrain(actorsTrain,actorsTest,train_data,test_data,actorsTrainVecs):
+    tokenizer1 = keras.preprocessing.text.Tokenizer(filters='!"#$%&*+,.:;<=>@\^_`{|}~\t\n')
+    tokenizer1.fit_on_texts([i[0] for i in train_data])
+    tokenizer1.fit_on_texts([i[0] for i in test_data])
+    afterFitText = tokenizer1.texts_to_matrix([i[0] for i in train_data], mode="tfidf")      
+    
+        #afterFitText = np.hstack((actorsTrainVecs,afterFitText))
+    containsQuesionmarkText = np.vectorize(lambda x: 0 if '?' in x else 1)(np.array([i[0] for i in train_data])).reshape((-1,1))
+    contains3DotsText = np.vectorize(lambda x: 0 if '...' in x else 1)(np.array([i[0] for i in train_data])).reshape((-1,1)) 
+    contains2DotsText = np.vectorize(lambda x: 0 if '..' in x else 1)(np.array([i[0] for i in train_data])).reshape((-1,1)) 
+    contains1DotText = np.vectorize(lambda x: 0 if '.' in x else 1)(np.array([i[0] for i in train_data])).reshape((-1,1)) 
+    containsLinesText = np.vectorize(lambda x: 0 if '--' in x else 1)(np.array([i[0] for i in train_data])).reshape((-1,1)) 
+        
+    isInTheMiddle= []
+    isInTheMiddle.append(False)
+    for i in range (1,len(train_data)-1):
+        isMiddle = actorsTrainVecs[i+1]== actorsTrainVecs[i-1] and  actorsTrainVecs[i] != actorsTrainVecs[i+1]
+        isInTheMiddle.append(isMiddle)
+    isInTheMiddle.append(False)
+    isInTheMiddleText = np.asarray(isInTheMiddle).reshape((-1,1)) 
+    numWordsText = np.vectorize(lambda x: len(x))(np.array([i[0] for i in train_data])).reshape((-1,1)) 
+        
+    afterFitText = np.hstack((containsQuesionmarkText,afterFitText))
+    afterFitText = np.hstack((contains3DotsText,afterFitText))
+    afterFitText = np.hstack((contains2DotsText,afterFitText))
+    afterFitText = np.hstack((contains1DotText,afterFitText))
+    afterFitText = np.hstack((containsLinesText,afterFitText))
+    afterFitText = np.hstack((numWordsText,afterFitText))
+    afterFitText = np.hstack((isInTheMiddleText,afterFitText))
+    return tokenizer1, afterFitText
+
+
+def extactFeaturesTest(tokenizer1,actorsTrain,actorsTest,train_data,test_data,actorsTestVecs):
+    afterFitTextTest = tokenizer1.texts_to_matrix([i[0] for i in test_data], mode="tfidf")
+    containsQuesionmarkTest = np.vectorize(lambda x: 0 if '?' in x else 1)(np.array([i[0] for i in test_data])).reshape((-1,1))
+    contains3DotsTest = np.vectorize(lambda x: 0 if '...' in x else 1)(np.array([i[0] for i in test_data])).reshape((-1,1)) 
+    contains2DotsTest = np.vectorize(lambda x: 0 if '..' in x else 1)(np.array([i[0] for i in test_data])).reshape((-1,1)) 
+    contains1DotTest = np.vectorize(lambda x: 0 if '.' in x else 1)(np.array([i[0] for i in test_data])).reshape((-1,1)) 
+    containsLinesTest = np.vectorize(lambda x: 0 if '--' in x else 1)(np.array([i[0] for i in test_data])).reshape((-1,1)) 
+        
+    numWordsTest = np.vectorize(lambda x: len(x))(np.array([i[0] for i in test_data])).reshape((-1,1)) 
+    isInTheMiddle= []
+    isInTheMiddle.append(False)
+    for i in range (1,len(test_data)-1):
+        isMiddle = actorsTestVecs[i+1]== actorsTestVecs[i-1] and actorsTestVecs[i] != actorsTestVecs[i+1]
+        isInTheMiddle.append(isMiddle)
+    isInTheMiddle.append(False)
+    isInTheMiddleTest = np.asarray(isInTheMiddle).reshape((-1,1)) 
+        
+    afterFitTextTest = np.hstack((containsQuesionmarkTest,afterFitTextTest))
+    afterFitTextTest = np.hstack((contains3DotsTest,afterFitTextTest))
+    afterFitTextTest = np.hstack((contains2DotsTest,afterFitTextTest))
+    afterFitTextTest = np.hstack((contains1DotTest,afterFitTextTest))
+    afterFitTextTest = np.hstack((containsLinesTest,afterFitTextTest)) 
+    afterFitTextTest = np.hstack((numWordsTest,afterFitTextTest))
+    afterFitTextTest = np.hstack((isInTheMiddleTest,afterFitTextTest))
+    return afterFitTextTest
+
+    
 def kFoldNueralNetwork():
     global model_predicts
     global tokenizer_dic
     global tmpTestDataTags
     sumScores = 0      
     #row = 1
-    workbook4 =xlsxwriter.Workbook('C:\hi\composites.xlsx')
+    workbook4 =xlsxwriter.Workbook(outputsPath + 'composites.xlsx')
     worksheet4 = workbook4.add_worksheet()
     worksheet4.write(0, 0, "transcript_ID")
     worksheet4.write(0, 1, "number of utterances in test")
@@ -565,9 +648,8 @@ def kFoldNueralNetwork():
     worksheet4.write(0, 6,  "predicted")
     worksheet4.write(0, 7,  "real")
     worksheet4.write(0, 8,  "difference")
-    worksheet4.write(0, 9,  "realPredictions")
-
-    
+    worksheet4.write(0, 9,  "realPredictions") 
+ 
 
     for ind in range(1,6):
         if ind == 1:
@@ -589,24 +671,10 @@ def kFoldNueralNetwork():
             actorsTest = actorsData[tapeindexes[ind-1]:tapeindexes[ind]]
             
         tmpTestDataTags = [i[1] for i in test_data]
-        tokenizer1 = keras.preprocessing.text.Tokenizer(filters='!"#$%&*+,.:;<=>@\^_`{|}~\t\n')
         actorsTrainVecs = np.vectorize(lambda x: 0 if x == 'Doctor' else 1)(np.array(actorsTrain)).reshape((-1,1))
         actorsTestVecs = np.vectorize(lambda x: 0 if x == 'Doctor' else 1)(np.array(actorsTest)).reshape((-1,1))
-        tokenizer1.fit_on_texts([i[0] for i in train_data])
-        tokenizer1.fit_on_texts([i[0] for i in test_data])
-        afterFitText = tokenizer1.texts_to_matrix([i[0] for i in train_data], mode="tfidf")      
+        tokenizer1, afterFitText = extactFeaturesTrain(actorsTrain,actorsTest,train_data,test_data,actorsTrainVecs)
         
-        #afterFitText = np.hstack((actorsTrainVecs,afterFitText))
-        containsQuesionmarkText = np.vectorize(lambda x: 0 if '?' in x else 1)(np.array([i[0] for i in train_data])).reshape((-1,1))
-        contains3DotsText = np.vectorize(lambda x: 0 if '...' in x else 1)(np.array([i[0] for i in train_data])).reshape((-1,1)) 
-        contains2DotsText = np.vectorize(lambda x: 0 if '..' in x else 1)(np.array([i[0] for i in train_data])).reshape((-1,1)) 
-        contains1DotText = np.vectorize(lambda x: 0 if '.' in x else 1)(np.array([i[0] for i in train_data])).reshape((-1,1)) 
-        containsLinesText = np.vectorize(lambda x: 0 if '--' in x else 1)(np.array([i[0] for i in train_data])).reshape((-1,1)) 
-        afterFitText = np.hstack((containsQuesionmarkText,afterFitText))
-        afterFitText = np.hstack((contains3DotsText,afterFitText))
-        afterFitText = np.hstack((contains2DotsText,afterFitText))
-        afterFitText = np.hstack((contains1DotText,afterFitText))
-        afterFitText = np.hstack((containsLinesText,afterFitText))
         #afterFitText = np.hstack((actorsTrainVecs,afterFitText))
         
         
@@ -614,26 +682,12 @@ def kFoldNueralNetwork():
         tokenizer2.fit_on_texts([i[1] for i in train_data])
         tokenizer2.fit_on_texts([i[1] for i in test_data])
         afterFitLabels = tokenizer2.texts_to_matrix([i[1] for i in train_data])
+        doctorSentences,afterFitLabelsDoctor,paitentSentences, afterFitLabelsPaitent = splitIntoDoctorPatient(afterFitText,afterFitLabels, actorsTrain)
         
-        
-        ############################################################get Doctor sentences################################
-        actorsTrainVecs2 = np.vectorize(lambda x: True if x == 'Doctor' else False)(np.array(actorsTrain))
-        i = 0
-        tmpPred = []
-        tmpPred2 = []
-        for element in actorsTrainVecs2:
-            if (element):
-                tmpPred.append(i)
-            else:
-                tmpPred2.append(i)
-                
-            i+=1
-        print (train_data)     
-        doctorSentences = np.array(afterFitText.tolist())[tmpPred]
-        afterFitLabelsDoctor =  np.array(afterFitLabels.tolist())[tmpPred]
-         
+        ############################################################ model Doctor ################################
+
         modelDoctor = Sequential([
-            Dense(128, activation='relu', input_shape= doctorSentences.shape[1:]),     ##binary classifier 
+            Dense(128, activation='relu', input_shape= doctorSentences.shape[1:]),     
             Dense(afterFitLabelsDoctor.shape[1], activation='sigmoid'),
         ])
           
@@ -642,19 +696,11 @@ def kFoldNueralNetwork():
                       metrics=['accuracy'])
         
         modelDoctor.fit(doctorSentences, afterFitLabelsDoctor, epochs=20, batch_size=32)
-        
-        
-        
-        ############################################################get Doctor sentences################################
      
-        ############################################################get paitent sentences################################
-                
-        paitentSentences = np.array(afterFitText.tolist())[tmpPred2]
-        afterFitLabelsPaitent =  np.array(afterFitLabels.tolist())[tmpPred2]
+        ############################################################ model Paitent ################################
 
-        
         modelPaitent = Sequential([
-            Dense(128, activation='relu', input_shape= paitentSentences.shape[1:]),     ##binary classifier 
+            Dense(128, activation='relu', input_shape= paitentSentences.shape[1:]),
             Dense(afterFitLabelsPaitent.shape[1], activation='sigmoid'),
         ])
           
@@ -663,60 +709,16 @@ def kFoldNueralNetwork():
                       metrics=['accuracy'])
         
         modelPaitent.fit(paitentSentences, afterFitLabelsPaitent, epochs=20, batch_size=32)
-        ############################################################get paitent sentences################################
         
-        '''
-        model = Sequential([
-            Dense(128, activation='relu', input_shape= afterFitText.shape[1:]),     ##binary classifier 
-            Dense(afterFitLabels.shape[1], activation='sigmoid'),
-        ])
-          
-        model.compile(optimizer='rmsprop',
-                      loss='categorical_crossentropy',
-                      metrics=['accuracy'])
         
-        model.fit(afterFitText, afterFitLabels, epochs=20, batch_size=32)
-        '''
-        
-        afterFitTextTest = tokenizer1.texts_to_matrix([i[0] for i in test_data], mode="tfidf")
-        containsQuesionmarkTest = np.vectorize(lambda x: 0 if '?' in x else 1)(np.array([i[0] for i in test_data])).reshape((-1,1))
-        contains3DotsTest = np.vectorize(lambda x: 0 if '...' in x else 1)(np.array([i[0] for i in test_data])).reshape((-1,1)) 
-        contains2DotsTest = np.vectorize(lambda x: 0 if '..' in x else 1)(np.array([i[0] for i in test_data])).reshape((-1,1)) 
-        contains1DotTest = np.vectorize(lambda x: 0 if '.' in x else 1)(np.array([i[0] for i in test_data])).reshape((-1,1)) 
-        containsLinesTest = np.vectorize(lambda x: 0 if '--' in x else 1)(np.array([i[0] for i in test_data])).reshape((-1,1)) 
-        afterFitTextTest = np.hstack((containsQuesionmarkTest,afterFitTextTest))
-        afterFitTextTest = np.hstack((contains3DotsTest,afterFitTextTest))
-        afterFitTextTest = np.hstack((contains2DotsTest,afterFitTextTest))
-        afterFitTextTest = np.hstack((contains1DotTest,afterFitTextTest))
-        afterFitTextTest = np.hstack((containsLinesTest,afterFitTextTest)) 
-        #afterFitTextTest = np.hstack((actorsTestVecs,afterFitTextTest))
-        
+
+        afterFitTextTest = extactFeaturesTest(tokenizer1,actorsTrain,actorsTest,train_data,test_data,actorsTestVecs)
         afterFitLabelsTest = tokenizer2.texts_to_matrix([i[1] for i in test_data])
-        ###############################################################################################################
+        doctorTestSentences,afterFitLabelsTestDoctor,paitentTestSentences,afterFitLabelsTestPaitent = splitIntoDoctorPatient(afterFitTextTest,afterFitLabelsTest, actorsTest)
         actorsTestVecs2 = np.vectorize(lambda x: True if x == 'Doctor' else False)(np.array(actorsTest))
-        i = 0
-        tmpTestPred = []
-        tmpTestPred2 = []
-        for element in actorsTestVecs2:
-            if (element):
-                tmpTestPred.append(i)
-            else:
-                tmpTestPred2.append(i)
-                
-            i+=1
-                
-        doctorTestSentences = np.array(afterFitTextTest.tolist())[tmpTestPred]
-        afterFitLabelsTestDoctor =  np.array(afterFitLabelsTest.tolist())[tmpTestPred]
-        paitentTestSentences = np.array(afterFitTextTest.tolist())[tmpTestPred2]
-        afterFitLabelsTestPaitent =  np.array(afterFitLabelsTest.tolist())[tmpTestPred2]
 
-        
-        
-        ############################################################get Doctor sentences################################
-     
-        ############################################################get paitent sentences################################
-
-        
+            
+    
         
         #############################################################################################################3
         
@@ -758,54 +760,20 @@ def kFoldNueralNetwork():
             t2 = lKey.replace(" " ,"")
             tagsPredictedNoSpaces.append(t2)
             
+          
         calculateComposites(tagsPredictedNoSpaces,test_data,actorsTestVecs,ind,worksheet4)
         compareRealAndModel(predicts, afterFitTextTest, tokenizer2, test_data, ind) 
         generateConclutions(ind, predicts,tokenizer2,test_data)
 
 
-        
+    workbook4.close()        
     print ("average accuracy: " +str(sumScores/10))
-    workbook4.close()
     return predicts, dic
      
     #################################################### k-fold with nueral model ##################################################################
 
     #################################################### comperation between prediction and real category ################################################
 def generateConclutions(ind, predicts,tokenizer2,test_data):    
-    '''row = 1
-    workbook2 =xlsxwriter.Workbook('C:\hi\dvir55.xlsx')
-    worksheet2 = workbook2.add_worksheet()
-    worksheet2.write(0, 0, "Sentence")
-    worksheet2.write(0, 1, "Real_tag")
-    worksheet2.write(0, 2,  "Prediction")
-    
-    
-    #print (type(model))
-    predicts = model.predict(afterFitTextTest)
-    dic = tokenizer2.word_index
-    
-    tagsNoSpaces =[]
-    tagsPredictedNoSpaces =[]
-    for i in range(0,len(predicts)):
-        p = predicts[i]
-        num = np.argmax(p)
-        
-        lKey =[key for key, value in dic.items() if value == num][0]
-        worksheet2.write(row, 0, test_data[row-1][0])
-        worksheet2.write(row, 1, test_data[row-1][1])
-        t1 = test_data[row-1][1].replace(" " ,"")
-        t1 = t1.lower()
-        tagsNoSpaces.append(t1)
-        worksheet2.write(row, 2,  lKey)
-        t2 = lKey.replace(" " ,"")
-        tagsPredictedNoSpaces.append(t2)
-        row+=1
-
-    workbook2.close()
-    '''
-    
-    #################################################### comperation between prediction and real category ######################################kf##########
-           
     
     
     #################################################### Indices per category ##############################################################################
@@ -825,7 +793,7 @@ def generateConclutions(ind, predicts,tokenizer2,test_data):
         tagsPredictedNoSpaces.append(t2)
         row+=1
     
-    rb = open_workbook('C:\hi\VisualMatrix.xlsx')
+    rb = open_workbook(resourcesPath +'VisualMatrix.xlsx')
     wb = copy(rb) # a writable copy (I can't read values out of this, only write to it)
     w_sheet = wb.get_sheet(6)
     
@@ -889,15 +857,15 @@ def generateConclutions(ind, predicts,tokenizer2,test_data):
             
     
     
-    wb.save('C:\hi\VisualMatrixNew' +str(ind) +'.xls')
+    wb.save(outputsPath +'VisualMatrixNew' +str(ind) +'.xls')
     #################################################### Indices per category ##############################################################################
     
 
     #################################################### generating graph ##############################################################################
     
     adjacencyList  = [[] for m in range(41)] 
-    tape1= train[:tapeindexes[1]]
-    tape1Tags = [i[1] for i in tape1]
+    #tape1= train[:tapeindexes[1]]
+    #tape1Tags = [i[1] for i in tape1]
     tape1Tags =  [i[1] for i in test_data]
     print (len(test_data))
     index = 0
@@ -924,14 +892,8 @@ def generateConclutions(ind, predicts,tokenizer2,test_data):
     
     
     i=0
-    '''for lis in newAdjacencyList:
-        key = [key for key, value in dict.items() if value == i+1][0]
-        print(str(key) + ": " + str(lis))
-        print()
-        i+=1
-    '''
         
-    workbook3 =xlsxwriter.Workbook('C:\hi\graph' +str(ind) +'.xlsx')
+    workbook3 =xlsxwriter.Workbook(outputsPath +'graph' +str(ind) +'.xlsx')
     worksheet3 = workbook3.add_worksheet()
     worksheet3.write(0, 0, "From")
     worksheet3.write(0, 1, "To")
@@ -949,8 +911,6 @@ def generateConclutions(ind, predicts,tokenizer2,test_data):
                 tmpList.append((str(key),str(pair[0]),str(pair[1])))
                 row+=1
         i+=1
-    print ("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj")
-    print (str(test_data[0][1]))
     tmpList.append((str("start"),str(test_data[0][1]),str('0.2')))
     DG.add_weighted_edges_from(tmpList)
     
@@ -976,11 +936,11 @@ def generateConclutions(ind, predicts,tokenizer2,test_data):
     d = json_graph.node_link_data(DG)
     json.dump(d, open('document.json','w'))
 
-    httpserver.load_url('force.html')
+    #httpserver.load_url('force.html')
     plt.axis('off')
     #plt.show()
-    nx.write_pajek(DG, "english_graph" +str(ind) +".net")
-    plt.savefig("graph"+str(ind)+".png")  
+    #nx.write_pajek(DG, "english_graph" +str(ind) +".net")
+    #plt.savefig("graph"+str(ind)+".png")  
     plt.clf()    
     return newAdjacencyList
     #################################################### generating graph ##############################################################################
@@ -1552,9 +1512,11 @@ def calculateComposites(tagsPredictedNoSpaces,test_data,actorsTestVecs,tapeID,wo
     print ("compute_ptcent2 :" , abs (compute_ptcent2-compute_ptcent2_MODEL),compute_ptcent2,compute_ptcent2_MODEL)
     #################################################### Composites ##############################################################################
 
+
+    #################################################### comperation between prediction and real category ######################################kf##########
 def compareRealAndModel(predicts, afterFitTextTest, tokenizer2, test_data,tapeNum):
     row = 1
-    path = 'C:\hi' +'\\' + 'englishComperation_' + str(tapeNum)+ '.xlsx'
+    path = outputsPath + 'englishComparison_' + str(tapeNum)+ '.xlsx'
     workbook2 =xlsxwriter.Workbook(path)
     #worksheet2 = workbook2.sheet_by_name('Sheet1')
     worksheet2 = workbook2.add_worksheet()
@@ -1585,6 +1547,8 @@ def compareRealAndModel(predicts, afterFitTextTest, tokenizer2, test_data,tapeNu
         row+=1
 
     workbook2.close()
+    #################################################### comperation between prediction and real category ######################################kf##########
+
     
 
 

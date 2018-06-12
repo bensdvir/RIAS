@@ -1,0 +1,9 @@
+Each program uses two folders: resources folder and outputs folder.
+
+The file 'categoriesSentences' contains division of the data per category.
+The 'composites' file contains the calculated composites that were calculated during the running of the program. 
+In each iteration, I create 'comparison' file wich includes 'comparison' between our prediction and the real category for each utterance in the test data,
+'graph' file representing the graph of the test data,, and 'visualmatrix' file contains the dry conclusions per category (recall, TP ratio and more)
+
+Finally, the interesting part of the code is found on 'kFoldNueralNetwork'. In this function we are extracting the features from the data, creating the models ,generate 
+conclusions and create the files mentioned above.
