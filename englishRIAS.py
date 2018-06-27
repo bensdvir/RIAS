@@ -283,7 +283,7 @@ def parseWordtoXExcel(path):
             tapenum+=1
   
 
-parseWordtoXExcel('C:\hi\DvirCheck.docx')
+#parseWordtoXExcel('C:\hi\DvirCheck.docx')
 random.seed(644)
 
 dict = {'personal':1,'laughs':2,'approve':3,'comp':4,'agree':5,'bc':6,'emp':7

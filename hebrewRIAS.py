@@ -637,6 +637,7 @@ def extactFeaturesTrain(actorsTrain,actorsTest,train_data,test_data,actorsTrainV
     isInTheMiddle.append(False)
     isInTheMiddleText = np.asarray(isInTheMiddle).reshape((-1,1)) 
     numWordsText = np.vectorize(lambda x: len(x))(np.array([i[0] for i in train_data])).reshape((-1,1)) 
+    
         
     afterFitText = np.hstack((containsQuesionmarkText,afterFitText))
     afterFitText = np.hstack((contains3DotsText,afterFitText))
@@ -664,6 +665,7 @@ def extactFeaturesTest(tokenizer1,actorsTrain,actorsTest,train_data,test_data,ac
         isInTheMiddle.append(isMiddle)
     isInTheMiddle.append(False)
     isInTheMiddleTest = np.asarray(isInTheMiddle).reshape((-1,1)) 
+    
         
     afterFitTextTest = np.hstack((containsQuesionmarkTest,afterFitTextTest))
     afterFitTextTest = np.hstack((contains3DotsTest,afterFitTextTest))
@@ -813,7 +815,7 @@ def kFoldNueralNetwork():
 
         
     workbook4.close()
-    print ("average accuracy: " +str(sumScores/20))
+    print ("average accuracy: " +str(sumScores/(2*len((tapeindexes)))))
     return predicts, dic
      
      
