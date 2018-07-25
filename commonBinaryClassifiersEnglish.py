@@ -300,8 +300,26 @@ dict = {'personal':1,'laughs':2,'approve':3,'comp':4,'agree':5,'bc':6,'emp':7
         ,'unintel':40,'?permission':41}  
 dict2 = {'personal':1,'laughs':2,'approve':3,'comp':4,'agree':5,'bc':6,'emp':7
         ,'concern':8,'r/o':9,'legit':10}  
-doctorDict ={'r/o':1,'trans':2,'gives-med':3,'c-l/s-p/s':4}
-patientDict ={'gives-med':1, 'gives-other':2,'disagree':3,'?med':4,'[?]med':5}
+
+doctorDict ={'orient':1,'gives-thera':2,'gives-med':3,'[?]med':4, 'agree':5, 'c-med/thera':6}
+patientDict ={'gives-l/s':1, 'concern':2,'agree':3,'gives-med':4}
+
+
+categoriesDoctorPrecision = {'orient':0,'gives-thera':0,'gives-med':0,'[?]med':0, 'agree':0, 'c-med/thera':0}
+categoriesPatientPresicion = {'gives-l/s':0, 'concern':0,'agree':0,'gives-med':0}
+
+categoriesDoctorRecall = {'orient':0,'gives-thera':0,'gives-med':0,'[?]med':0, 'agree':0, 'c-med/thera':0}
+categoriesPatientRecall = {'gives-l/s':0, 'concern':0,'agree':0,'gives-med':0}
+
+categoriesDoctorTrue = {'orient':0,'gives-thera':0,'gives-med':0,'[?]med':0, 'agree':0, 'c-med/thera':0}
+categoriesPatientTrue = {'gives-l/s':0, 'concern':0,'agree':0,'gives-med':0}
+
+categoriesDoctorRealCategory = {'orient':0,'gives-thera':0,'gives-med':0,'[?]med':0, 'agree':0, 'c-med/thera':0}
+categoriesPatientRealCategory = {'gives-l/s':0, 'concern':0,'agree':0,'gives-med':0}
+
+categoriesDoctorPredicted = {'orient':0,'gives-thera':0,'gives-med':0,'[?]med':0, 'agree':0, 'c-med/thera':0}
+categoriesPatientPredicted = {'gives-l/s':0, 'concern':0,'agree':0,'gives-med':0}
+
 
 train_data = []
 workbook =xlrd.open_workbook(outputsPath+'\data.xlsx')
@@ -558,10 +576,12 @@ model_predicts  = None
 tokenizer_dic = None
 tmpTestDataTags = None
 tmpRow = 1
+tmpRow2 = 1
  
-def kFoldNueralNetwork(f,alpha,workSheetTemp):
+def kFoldNueralNetwork(f,alpha,workSheetTemp,workSheetCategories):
     global model_predicts
     global tmpRow
+    global tmpRow2
     global tokenizer_dic
     global tmpTestDataTags
     true_predictions_ratio = 0
@@ -696,9 +716,24 @@ def kFoldNueralNetwork(f,alpha,workSheetTemp):
                     print ("vvvvvvvvvvvvvvvvvvvvvvvvvvv")
                     pred = [key for key, value in patientDict.items() if value == num+1][0]
                     print (pred)
+            if(actorsTestVecs[i] == 1):
+                if test_data[i][1] in doctorDict:
+                    categoriesDoctorRealCategory[test_data[i][1]]+=1
+            else:
+                if test_data[i][1] in patientDict:
+                    categoriesPatientRealCategory[test_data[i][1]]+=1
             if (pred!='Unknown'):
+                if(actorsTestVecs[i] == 1):
+                    categoriesDoctorPredicted[pred]+=1
+                else:
+                    categoriesPatientPredicted[pred]+=1
                 if (test_data[i][1] == pred):
                     truePredicts+=1
+                    if(actorsTestVecs[i] == 1):
+                        categoriesDoctorTrue[pred]+=1
+                    else:
+                        categoriesPatientTrue[pred]+=1
+                                             
             else:
                 unknownPred+=1
             worksheet9.write(row, 0, test_data[i][0])
@@ -708,11 +743,30 @@ def kFoldNueralNetwork(f,alpha,workSheetTemp):
             row+=1
             
         workbook9.close()
+        for key in doctorDict:
+            categoriesDoctorPrecision[key] += categoriesDoctorTrue[key]/categoriesDoctorPredicted[key]
+            categoriesDoctorRecall[key] += categoriesDoctorTrue[key]/categoriesDoctorRealCategory[key]
+            categoriesDoctorPredicted[key]=0
+            categoriesDoctorRealCategory[key]=0
+            categoriesDoctorTrue[key]=0
+            
+        for key in patientDict:
+            categoriesPatientPresicion[key] += categoriesPatientTrue[key]/categoriesPatientPredicted[key]
+            categoriesPatientRecall[key] += categoriesPatientTrue[key]/categoriesPatientRealCategory[key]
+            categoriesPatientPredicted[key]=0
+            categoriesPatientRealCategory[key]=0
+            categoriesPatientTrue[key]=0
+            
+             
+            
+            
         true_predictions_ratio+= truePredicts/len(afterFitTextTest)
         print ("temp recall ration:" + str(true_predictions_ratio/len(afterFitTextTest)))
         
         precision_ratio+=truePredicts/(len(afterFitTextTest)-unknownPred)
         print ("temp precision:" + str(truePredicts/(len(afterFitTextTest)-unknownPred)))
+        
+        
 
 
         unknown_predictions_ratio+= unknownPred/len(afterFitTextTest)
@@ -732,6 +786,27 @@ def kFoldNueralNetwork(f,alpha,workSheetTemp):
     workSheetTemp.write(tmpRow, 2,  true_predictions_ratio/len(tapeindexes))
     workSheetTemp.write(tmpRow, 3,  unknown_predictions_ratio/len(tapeindexes))
     tmpRow+=1
+    
+    for key in doctorDict:
+        workSheetCategories.write(tmpRow2, 0, alpha )
+        workSheetCategories.write(tmpRow2, 1, key )
+        workSheetCategories.write(tmpRow2, 2, 'Doctor' )
+        workSheetCategories.write(tmpRow2, 3, categoriesDoctorPrecision[key]/5)
+        workSheetCategories.write(tmpRow2, 4, categoriesDoctorRecall[key]/5)
+        categoriesDoctorPrecision[key]=0
+        categoriesDoctorRecall[key]=0
+        tmpRow2+=1
+        
+    for key in patientDict:
+        workSheetCategories.write(tmpRow2, 0, alpha )
+        workSheetCategories.write(tmpRow2, 1, key )
+        workSheetCategories.write(tmpRow2, 2, 'Patient')
+        workSheetCategories.write(tmpRow2, 3, categoriesPatientPresicion[key]/5)
+        workSheetCategories.write(tmpRow2, 4, categoriesPatientRecall[key]/5)
+        categoriesPatientPresicion[key]=0
+        categoriesPatientRecall[key]=0
+        tmpRow2+=1
+        
     '''f.flush()
     f.write(str(alpha)+"           "+str(true_predictions_ratio/5)+"               "+str(unknown_predictions_ratio/5)+"                 "+str(1-(true_predictions_ratio/5+unknown_predictions_ratio/5)))
     f.write("\n")
@@ -1637,13 +1712,23 @@ def main():
     workSheetTemp.write(0, 2,  "recall")
     workSheetTemp.write(0, 3,  "unknown_predictions_ratio")
     
+    
+    workbookTempCat =xlsxwriter.Workbook(outputsPath+'alphaTable_Common_Categories.xlsx')
+    workSheetTempCat = workbookTempCat.add_worksheet()
+    workSheetTempCat.write(0, 0,  "alpha")
+    workSheetTempCat.write(0, 1,  "category")
+    workSheetTempCat.write(0, 2,  "actor")
+    workSheetTempCat.write(0, 3,  "precision")
+    workSheetTempCat.write(0, 4,  "recall")
+    
     f = open('file.txt','w')
     f.write("alpha           precision         recall               unknown_predictions_ratio")   
     f.write("\n")
     #f.flush()
     print ("jjjjjjjjjjjjjjjjj")
     for alpha in np.arange(0,0.4,0.02):    
-        model_predicts, tokenizer_dic = kFoldNueralNetwork(f,alpha,workSheetTemp)
+        model_predicts, tokenizer_dic = kFoldNueralNetwork(f,alpha,workSheetTemp,workSheetTempCat)
+    workbookTempCat.close()
     workbookTemp1.close()
     
     #calculateComposites()

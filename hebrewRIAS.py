@@ -282,7 +282,6 @@ def parseWordtoXExcel(path):
             tapeindexes[tapenum]=n
             tapenum+=1
   
-
 #parseWordtoXExcel('C:\hi\DvirCheck.docx')
 random.seed(644)
 
@@ -342,6 +341,9 @@ for num in range (14,28):
     ind = 0
     while (ind<len(train_data)):
         train.append((train_data[ind],train_tags[ind]))
+        #worksheet9.write(ind, 0, actorsData[ind])
+        #worksheet9.write(ind, 1, train_data[ind])
+        #worksheet9.write(ind, 2, train_tags[ind])
         ind+=1
     print (ind)
     if num == 14:
@@ -354,6 +356,17 @@ for num in range (14,28):
         actors.append(actorsData[ind2])
         ind2+=1
     #train = train[1:]
+workbook10 =xlsxwriter.Workbook(outputsPath+'data.xlsx')
+worksheet10 = workbook10.add_worksheet()
+
+ind = 0
+while (ind<len(train)):
+    worksheet10.write(ind, 0, actors[ind])
+    worksheet10.write(ind, 1, train[ind][0])
+    worksheet10.write(ind, 2, train[ind][1])
+    ind+=1
+workbook10.close()
+
 actorsData = actors
 print(tapeindexes)
 #print ("nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn ",len(train))
@@ -1636,7 +1649,8 @@ def predictionsUsingGraph(graph):
     
 
 def main():
-    afterFitTextTest,tokenizer2 = kFoldNueralNetwork()
+    print ("hi")
+    #afterFitTextTest,tokenizer2 = kFoldNueralNetwork()
    # generateConclutions(afterFitTextTest,test_data,tokenizer2,tmpModel)
     
     
